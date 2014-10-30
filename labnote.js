@@ -4,15 +4,25 @@ var fs = require('fs');
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var editor = process.env.EDITOR || 'vi';
-var date = Date.now();
+var date = new Date();
 var async = require('async');
 var iferr = require('iferr');
+var nopt = require('nopt');
 
-if (!process.argv[2]) {
-    console.warn("use: " + process.argv.join(' ') + ' filename');
+var conf = nopt({
+    "message": [String, null]
+}, {
+    "m": "--message"
+});
+
+console.log(conf);
+
+if (!conf.argv.remain || conf.argv.remain.length > 1) {
+    console.warn("use: labnote [-m message] file");
     return process.exit(1);
 }
-var file = process.argv[2];
+
+var file = conf.argv.remain[0];
 
 var clean = false;
 
@@ -28,15 +38,22 @@ function addDateToFile(cb) {
     var out = fs.createWriteStream(file, {flags: 'a'});
     out.on('finish', cb);
     out.on('error', cb);
-    out.end("\n# " + new Date().toLocaleString() + "\n\n");
+    out.end("\n# " + date.toLocaleString() + "\n\n");
 }
 
-function editFile(cb) {
-    var child = spawn(editor, /vi/.test(editor) ? [file, '+'] : [file], {
-        stdio: 'inherit'
-    });
+function addMessage(cb) {
+    if (conf.message) {
+        var out = fs.createWriteStream(file, {flags: 'a'});
+        out.on('finish', cb);
+        out.on('error', cb);
+        out.end(conf.message + "\n");
+    } else {
+        var child = spawn(editor, /vi/.test(editor) ? [file, '+'] : [file], {
+            stdio: 'inherit'
+        });
 
-    child.on('exit', handleExit(cb));
+        child.on('exit', handleExit(cb));
+    }
 }
 
 function handleExit(cb) {
@@ -59,7 +76,7 @@ function commitIfCleanAndChanged(cb) {
         return cb();
     } else {
         fs.stat(file, iferr(cb, function (s) {
-            if (Number(s.mtime) == Number(stat.mtime)) {
+            if (!conf.message && Number(s.mtime) == Number(stat.mtime)) {
                 console.warn("No changes made.");
                 exec('git checkout "' + file + '"').on('exit', handleExit(cb));
             } else {
@@ -79,4 +96,4 @@ function exit(err) {
     }
 }
 
-async.seq(checkIfClean, addDateToFile, statBefore, editFile, commitIfCleanAndChanged, push)(exit);
+async.seq(checkIfClean, addDateToFile, statBefore, addMessage, commitIfCleanAndChanged, push)(exit);
