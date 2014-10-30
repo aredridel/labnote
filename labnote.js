@@ -45,13 +45,32 @@ function handleExit(cb) {
     };
 }
 
-function commitIfClean(cb) {
+var stat;
+function statBefore(cb) {
+    fs.stat(file, iferr(cb, function (s) {
+        stat = s;
+        cb();
+    }));
+}
+
+function commitIfCleanAndChanged(cb) {
     if (!clean) {
         console.warn("Repo was not clean before adding note; not committing");
         return cb();
     } else {
-        exec('git commit -am "' + date + '"').on('exit', handleExit(cb));
+        fs.stat(file, iferr(cb, function (s) {
+            if (Number(s.mtime) == Number(stat.mtime)) {
+                console.warn("No changes made.");
+                exec('git checkout "' + file + '"').on('exit', handleExit(cb));
+            } else {
+                exec('git commit -am "' + String(date) + '"').on('exit', handleExit(cb));
+            }
+        }));
     }
+}
+
+function push(cb) {
+    exec('git push').on('exit', handleExit(cb));
 }
 
 function exit(err) {
@@ -60,4 +79,4 @@ function exit(err) {
     }
 }
 
-async.seq(checkIfClean, addDateToFile, editFile, commitIfClean)(exit);
+async.seq(checkIfClean, addDateToFile, statBefore, editFile, commitIfCleanAndChanged, push)(exit);
