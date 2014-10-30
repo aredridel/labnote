@@ -47,6 +47,7 @@ function handleExit(cb) {
 
 function commitIfClean(cb) {
     if (!clean) {
+        console.warn("Repo was not clean before adding note; not committing");
         return cb();
     } else {
         exec('git commit -am "' + date + '"').on('exit', handleExit(cb));
