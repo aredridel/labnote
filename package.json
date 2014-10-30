@@ -1,10 +1,10 @@
 {
   "name": "labnote",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "bin": {
-      "labnote": "./labnote.js"
+    "labnote": "./labnote.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
