@@ -38,7 +38,7 @@ function addDateToFile(cb) {
     var out = fs.createWriteStream(file, {flags: 'a'});
     out.on('finish', cb);
     out.on('error', cb);
-    out.end("\n# " + date.toLocaleString() + "\n\n");
+    out.end("\n# " + date.toLocaleString() + "\n\n\n");
 }
 
 function addMessage(cb) {
