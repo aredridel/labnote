@@ -15,8 +15,6 @@ var conf = nopt({
     "m": "--message"
 });
 
-console.log(conf);
-
 if (!conf.argv.remain || conf.argv.remain.length > 1) {
     console.warn("use: labnote [-m message] file");
     return process.exit(1);
