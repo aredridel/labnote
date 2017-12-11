@@ -7,20 +7,21 @@ var editor = process.env.EDITOR || 'vi';
 var date = new Date();
 var async = require('async');
 var iferr = require('iferr');
-var nopt = require('nopt');
+var args = require('yargs')
+    .option('message', {
+        alias: 'm',
+        description: 'The message for the log'
+    })
+    .help('help').argv;
 
-var conf = nopt({
-    "message": [String, null]
-}, {
-    "m": "--message"
-});
-
-if (!conf.argv.remain || conf.argv.remain.length > 1) {
+if (args._.length != 1) {
     console.warn("use: labnote [-m message] file");
-    return process.exit(1);
+    process.exit(1);
 }
 
-var file = conf.argv.remain[0];
+console.warn(args)
+
+var file = args._[0];
 
 var clean = false;
 
@@ -40,11 +41,11 @@ function addDateToFile(cb) {
 }
 
 function addMessage(cb) {
-    if (conf.message) {
+    if (args.message) {
         var out = fs.createWriteStream(file, {flags: 'a'});
         out.on('finish', cb);
         out.on('error', cb);
-        out.end(conf.message + "\n");
+        out.end(args.message + "\n");
     } else {
         var child = spawn(editor, /vi/.test(editor) ? [file, '+'] : [file], {
             stdio: 'inherit'
@@ -74,7 +75,7 @@ function commitIfCleanAndChanged(cb) {
         return cb();
     } else {
         fs.stat(file, iferr(cb, function (s) {
-            if (!conf.message && Number(s.mtime) == Number(stat.mtime)) {
+            if (!args.message && Number(s.mtime) == Number(stat.mtime)) {
                 console.warn("No changes made.");
                 exec('git checkout "' + file + '"').on('exit', handleExit(cb));
             } else {
