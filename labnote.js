@@ -19,8 +19,6 @@ if (args._.length != 1) {
     process.exit(1);
 }
 
-console.warn(args)
-
 var file = args._[0];
 
 var clean = false;
